@@ -83,7 +83,7 @@ export default function Home() {
         <div className="retro-panel rounded-lg p-6 mb-6">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-300 mb-2" style={{ fontFamily: 'IBM Plex Mono, monospace' }}>
-              SONY AI-AGENT SYSTEM
+              LISA AVATAR
             </h1>
             <div className="text-sm text-gray-500" style={{ fontFamily: 'VT323, monospace' }}>
               MODEL: D-ID-88 • SERIES: PYGMALION
