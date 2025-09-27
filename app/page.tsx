@@ -1,24 +1,25 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import ChatBox from '@/components/ChatBox';
+import { useEffect, useRef, useState } from "react";
+import { initAgent, chat, speak, streamId, disconnect } from "@/lib/agent";
 
 export default function Home() {
-  const [isConnected, setIsConnected] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [ready, setReady] = useState(false);
+  const [input, setInput] = useState("");
 
   useEffect(() => {
-    // Placeholder for WebRTC connection initialization
-    const initializeWebRTC = async () => {
+    (async () => {
+      if (!videoRef.current) return;
       try {
-        // TODO: Initialize WebRTC connection to D-ID Agent stream
-        console.log('WebRTC connection succeeded (placeholder)');
-        setIsConnected(true);
+        await initAgent(videoRef.current);
+        console.log("streamId:", streamId());
+        setReady(true);
       } catch (error) {
-        console.error('WebRTC connection failed:', error);
+        console.error("Failed to initialize agent:", error);
       }
-    };
-
-    initializeWebRTC();
+    })();
+    return () => { disconnect(); };
   }, []);
 
   return (
@@ -40,9 +41,9 @@ export default function Home() {
              Tracks: Best Avatar, Best Memory
             </p>
             <div className="flex items-center justify-center mt-4">
-              <div className={`w-3 h-3 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <div className={`w-3 h-3 rounded-full mr-2 ${ready ? 'bg-green-500' : 'bg-red-500'}`}></div>
               <span className="text-sm text-slate-600">
-                {isConnected ? 'Connected' : 'Disconnected'}
+                {ready ? 'Connected' : 'Connecting...'}
               </span>
             </div>
           </div>
@@ -55,29 +56,51 @@ export default function Home() {
               </h2>
               <div className="relative aspect-video bg-slate-900 rounded-lg overflow-hidden">
                 <video
+                  ref={videoRef}
                   className="w-full h-full object-cover"
                   autoPlay
-                  muted
+                  muted={false}
                   playsInline
-                  poster="https://images.pexels.com/photos/2182863/pexels-photo-2182863.jpeg?auto=compress&cs=tinysrgb&w=800"
                 >
-                  {/* Placeholder for D-ID Agent stream */}
                   Your browser does not support the video tag.
                 </video>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent"></div>
-                <div className="absolute bottom-4 left-4">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
-                    <span className="text-white text-sm font-medium">
-                      AI Agent
-                    </span>
-                  </div>
-                </div>
               </div>
             </div>
 
-            {/* Chat Interface */}
-            <div className="bg-white rounded-2xl shadow-lg">
-              <ChatBox />
+            {/* Simple Chat Interface */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-slate-800 mb-4">
+                Chat with Agent
+              </h2>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Ask something..."
+                    className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && ready && input.trim()) {
+                        chat(input).then(() => setInput(""));
+                      }
+                    }}
+                  />
+                  <button
+                    disabled={!ready || !input.trim()}
+                    onClick={() => chat(input).then(() => setInput(""))}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Ask
+                  </button>
+                </div>
+                <button
+                  disabled={!ready}
+                  onClick={() => speak("Hello! I'm speaking live.")}
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Say "Hello"
+                </button>
+              </div>
             </div>
           </div>
         </div>
