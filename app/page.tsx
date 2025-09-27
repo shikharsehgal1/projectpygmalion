@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { initAgent, chat, speak, streamId, disconnect } from "@/lib/agent";
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const agentRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
   const [input, setInput] = useState("");
 
@@ -12,14 +12,22 @@ export default function Home() {
     (async () => {
       if (!videoRef.current) return;
       try {
-        await initAgent(videoRef.current);
-        console.log("streamId:", streamId());
+        // Dynamic import to avoid SSR issues with D-ID SDK
+        const agentModule = await import("@/lib/agent");
+        agentRef.current = agentModule;
+        
+        await agentModule.initAgent(videoRef.current);
+        console.log("streamId:", agentModule.streamId());
         setReady(true);
       } catch (error) {
         console.error("Failed to initialize agent:", error);
       }
     })();
-    return () => { disconnect(); };
+    return () => { 
+      if (agentRef.current) {
+        agentRef.current.disconnect();
+      }
+    };
   }, []);
 
   return (
@@ -80,14 +88,14 @@ export default function Home() {
                     placeholder="Ask something..."
                     className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     onKeyPress={(e) => {
-                      if (e.key === 'Enter' && ready && input.trim()) {
-                        chat(input).then(() => setInput(""));
+                      if (e.key === 'Enter' && ready && input.trim() && agentRef.current) {
+                        agentRef.current.chat(input).then(() => setInput(""));
                       }
                     }}
                   />
                   <button
                     disabled={!ready || !input.trim()}
-                    onClick={() => chat(input).then(() => setInput(""))}
+                    onClick={() => agentRef.current?.chat(input).then(() => setInput(""))}
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Ask
@@ -95,7 +103,7 @@ export default function Home() {
                 </div>
                 <button
                   disabled={!ready}
-                  onClick={() => speak("Hello! I'm speaking live.")}
+                  onClick={() => agentRef.current?.speak("Hello! I'm speaking live.")}
                   className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Say "Hello"
