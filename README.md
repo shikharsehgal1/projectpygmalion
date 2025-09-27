@@ -1,47 +1,47 @@
-# D-ID Agent Integration Web App
+# Project Pygmalion - D-ID Agent Integration
 
-A Next.js TypeScript application for interacting with D-ID AI agents through voice and text input.
+A Next.js TypeScript application for interacting with D-ID AI agents using the official D-ID Agents SDK.
 
 ## Features
 
-- **Voice Interaction**: Record audio using your microphone and send it directly to D-ID agents
-- **Text Chat**: Type messages to communicate with the AI agent
-- **Real-time Transcript**: View conversation history with timestamps
-- **Video Avatar**: Placeholder for D-ID agent video stream
+- **Live Video Avatar**: Real-time D-ID agent video stream via WebRTC
+- **Text Chat**: Direct communication with AI agent using LLM
+- **Text-to-Speech**: Direct TTS without LLM processing
 - **Responsive Design**: Modern, mobile-friendly interface
 
 ## Setup Instructions
 
-### 1. Environment Configuration
+### 1. D-ID Studio Setup
 
-Create a `.env.local` file in the root directory with the following variables:
+1. Go to [D-ID Studio](https://studio.d-id.com/)
+2. Create your Agent
+3. Go to **... → </> Embed**
+4. **Allowlist your domain** (e.g., `http://localhost:3000`)
+5. Copy the two values: **`data-agent-id`** and **`data-client-key`**
+
+### 2. Environment Configuration
+
+Create a `.env.local` file in the root directory:
 
 ```env
-# D-ID API Configuration
-DID_BASIC_AUTH=your_base64_encoded_credentials
-DID_AGENT_ID=your_agent_id
-DID_STREAM_ID=your_stream_id
+# D-ID Agents SDK Configuration
+NEXT_PUBLIC_DID_AGENT_ID=your_agent_id_here
+NEXT_PUBLIC_DID_CLIENT_KEY=your_client_key_here
 ```
 
-To get your `DID_BASIC_AUTH`:
-1. Go to [D-ID API Console](https://console.d-id.com/)
-2. Get your API key from the account settings
-3. Encode your credentials in base64 format: `username:api_key`
-4. You can use this command: `echo -n "username:api_key" | base64`
-
-### 2. Install Dependencies
+### 3. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Run Development Server
+### 4. Run Development Server
 
 ```bash
 npm run dev
 ```
 
-### 4. Open Application
+### 5. Open Application
 
 Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
 
@@ -49,71 +49,63 @@ Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
 
 ```
 ├── app/
-│   ├── api/agent-input/route.ts    # API endpoint for D-ID integration
-│   ├── page.tsx                    # Main application page
+│   ├── page.tsx                    # Main application page with SDK integration
 │   └── layout.tsx                  # Root layout
-├── components/
-│   └── ChatBox.tsx                 # Chat interface component
 ├── lib/
-│   └── did.ts                      # D-ID API utilities
+│   └── agent.ts                    # D-ID Agents SDK wrapper
 └── README.md
 ```
 
 ## Usage
 
-### Voice Input
-1. Click and hold the microphone button
-2. Speak your message
-3. Release the button to send (or wait 5 seconds for auto-stop)
-4. Audio is sent directly to D-ID agents for processing
-
 ### Text Input
-1. Type your message in the text input field
-2. Press Enter or click the send button
-3. Text is sent to D-ID agents as a text script
+1. Type your message in the input field
+2. Press Enter or click "Ask" button
+3. The agent will respond with both voice and video
 
-## API Integration
+### Direct Speech
+Click "Say Hello" to make the agent speak without LLM processing
 
-The app integrates with D-ID Agents API:
+## SDK Integration
 
-- **Audio Input**: Sends audio as base64 data URL to the `/input` endpoint
-- **Text Input**: Sends text messages to the same endpoint
-- **Authentication**: Uses Basic Auth with credentials from environment variables
+The app uses the official D-ID Agents SDK:
+
+- **WebRTC Connection**: Direct real-time video/audio stream
+- **Chat Method**: `chat(message)` - Agent/LLM responds with voice
+- **Speak Method**: `speak(text)` - Direct TTS without LLM
+- **Client Key Authentication**: Secure front-end authentication
 
 ## Key Components
 
-### ChatBox Component
-- Handles microphone recording using MediaRecorder API
-- Manages conversation transcript state
-- Sends both audio and text to the backend API
+### Agent SDK Wrapper (`lib/agent.ts`)
+- Initializes D-ID Agent Manager with WebRTC
+- Handles video stream attachment
+- Provides chat and speak methods
+- Manages connection lifecycle
 
-### D-ID Utility Library
-- Provides functions for API communication
-- Handles authentication and error management
-- Supports both audio and text script types
-
-### API Route
-- Processes multipart/form-data for audio files
-- Handles JSON payloads for text input
-- Forwards requests to D-ID Agents API
-
+### Main Page Component
+- Video element for agent stream
+- Simple chat interface
+- Connection status indicator
+ 
 ## Browser Compatibility
 
-- Requires modern browsers with MediaRecorder API support
-- Needs microphone permissions for voice recording
-- WebRTC support needed for future video streaming
+- Requires modern browsers with WebRTC support
+- HTTPS required (or localhost for development)
+- Camera/microphone permissions may be requested
 
-## Development Notes
+## Important Notes
 
-- The video element currently shows a placeholder
-- WebRTC connection initialization is stubbed for future implementation
-- Audio is converted to base64 for transmission (consider file upload for production)
-- Error handling includes user feedback in the transcript
+- **Domain allowlisting is required** in D-ID Studio Embed settings
+- The SDK is **front-end only** - Agent/Knowledge management via Studio or API
+- WebRTC requires HTTPS in production (localhost works for development)
+ 
+## Team Information
 
-## Production Considerations
+**Project Pygmalion - Team LISA**
+- Luis Heysen
+- Immanuel Peters  
+- Shikhar Sehgal
+- Angelo Fabrizio Torres Inga
 
-- Implement proper file upload handling for audio
-- Add WebRTC video streaming integration
-- Include proper error boundaries and loading states
-- Consider audio compression and format optimization
-- Add user authentication and session management
+**Competition Tracks**: Best Avatar, Best Memory
