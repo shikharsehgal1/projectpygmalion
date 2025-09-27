@@ -28,10 +28,16 @@ export default function Home() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-slate-800 mb-2">
-              D-ID Agent Assistant
+             Project Pygmalion
             </h1>
-            <p className="text-slate-600">
-              Interact with your AI agent through voice and text
+           <h2 className="text-2xl font-semibold text-slate-700 mb-2">
+             Team LISA
+           </h2>
+           <p className="text-slate-600 mb-2">
+             Luis Heysen, Immanuel Peters, Shikhar Sehgal, Angelo Fabrizio Torres Inga
+           </p>
+           <p className="text-slate-500 font-medium">
+             Tracks: Best Avatar, Best Memory
             </p>
             <div className="flex items-center justify-center mt-4">
               <div className={`w-3 h-3 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
