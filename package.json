@@ -1,0 +1,31 @@
+{
+  "name": "voice-minecraft-mcp",
+  "version": "1.0.0",
+  "description": "Voice-controlled Minecraft bot using OpenAI Agents SDK and MCP",
+  "main": "voice_server.js",
+  "scripts": {
+    "start": "node voice_server.js",
+    "dev": "nodemon voice_server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "minecraft",
+    "voice",
+    "ai",
+    "mcp",
+    "openai",
+    "agents"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Minecraft Controller</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        .status.disconnected {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid #ff4444;
+        }
+        
+        .status.connected {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #44ff44;
+        }
+        
+        .status.listening {
+            background: rgba(255, 255, 0, 0.2);
+            border: 2px solid #ffff44;
+        }
+        
+        .input-group {
+            margin: 20px 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px 0 rgba(255, 107, 107, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(255, 107, 107, 0.4);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        
+        .log-entry.info {
+            background: rgba(0, 123, 255, 0.2);
+        }
+        
+        .log-entry.success {
+            background: rgba(40, 167, 69, 0.2);
+        }
+        
+        .log-entry.error {
+            background: rgba(220, 53, 69, 0.2);
+        }
+        
+        .log-entry.warning {
+            background: rgba(255, 193, 7, 0.2);
+        }
+        
+        .mic-icon {
+            font-size: 3em;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .pulse {
+            animation: pulse 1.5s ease-in-out infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Voice Minecraft Controller</h1>
+        
+        <div class="status disconnected" id="status">
+            Disconnected - Enter ephemeral key to connect
+        </div>
+        
+        <div class="input-group">
+            <label for="ephemeralKey">Ephemeral Client Key:</label>
+            <input type="text" id="ephemeralKey" placeholder="Enter your ephemeral key (starts with ek_)">
+        </div>
+        
+        <div class="controls">
+            <button id="connectBtn" onclick="connectToAgent()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnectFromAgent()" disabled>Disconnect</button>
+            <button id="listenBtn" onclick="startListening()" disabled>🎤 Start Listening</button>
+            <button id="stopBtn" onclick="stopListening()" disabled>⏹️ Stop Listening</button>
+        </div>
+        
+        <div class="mic-icon" id="micIcon">🎤</div>
+        
+        <div class="log" id="log">
+            <div class="log-entry info">Ready to connect to voice agent...</div>
+        </div>
+    </div>
+
+    <!-- Include OpenAI Agents SDK -->
+    <script type="module">
+        // Import OpenAI Agents SDK
+        import { RealtimeAgent, RealtimeSession } from 'https://unpkg.com/@openai/agents-realtime@latest/dist/index.js';
+        
+        let agent = null;
+        let session = null;
+        let isListening = false;
+        
+        // DOM elements
+        const statusEl = document.getElementById('status');
+        const ephemeralKeyInput = document.getElementById('ephemeralKey');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const listenBtn = document.getElementById('listenBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const micIcon = document.getElementById('micIcon');
+        const logEl = document.getElementById('log');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        function updateStatus(message, className) {
+            statusEl.textContent = message;
+            statusEl.className = `status ${className}`;
+        }
+        
+        function updateButtons(connected, listening) {
+            connectBtn.disabled = connected;
+            disconnectBtn.disabled = !connected;
+            listenBtn.disabled = !connected || listening;
+            stopBtn.disabled = !connected || !listening;
+        }
+        
+        window.connectToAgent = async function() {
+            const ephemeralKey = ephemeralKeyInput.value.trim();
+            
+            if (!ephemeralKey) {
+                log('Please enter an ephemeral key', 'error');
+                return;
+            }
+            
+            if (!ephemeralKey.startsWith('ek_')) {
+                log('Ephemeral key should start with "ek_"', 'error');
+                return;
+            }
+            
+            try {
+                updateStatus('Connecting to voice agent...', 'disconnected');
+                log('Creating voice agent...', 'info');
+                
+                // Create the voice agent with Minecraft MCP tools
+                agent = new RealtimeAgent({
+                    name: 'Minecraft Voice Controller',
+                    instructions: `You are a Minecraft voice controller that helps users control their Minecraft bot through voice commands.
+
+Available MCP Tools:
+- get-position: Get current bot position
+- move-to-position: Move to specific coordinates  
+- fly-to: Fly to specific coordinates
+- jump: Make the bot jump
+- move-in-direction: Move in a direction for a duration
+- look-at: Look at specific coordinates
+- list-inventory: List bot's inventory
+- find-item: Find item in inventory
+- equip-item: Equip an item
+- place-block: Place a block at coordinates
+- dig-block: Dig a block at coordinates
+- get-block-info: Get information about a block
+- find-block: Find blocks of a specific type
+- find-entity: Find entities of a specific type
+- send-chat: Send a chat message
+- read-chat: Read recent chat messages
+- detect-gamemode: Detect current gamemode
+
+When users speak commands like:
+- "Move forward" → use move-in-direction tool
+- "Jump" → use jump tool
+- "Place a stone block" → use place-block tool
+- "Show my inventory" → use list-inventory tool
+- "Send hello in chat" → use send-chat tool
+
+Always use the appropriate MCP tools to execute the user's voice commands. Be helpful and confirm what you're doing.`,
+                    tools: [
+                        // MCP tools will be dynamically added
+                    ]
+                });
+                
+                log('Creating realtime session...', 'info');
+                
+                // Create the realtime session
+                session = new RealtimeSession(agent, {
+                    model: 'gpt-realtime'
+                });
+                
+                log('Connecting to OpenAI Realtime API...', 'info');
+                
+                // Connect to the session
+                await session.connect({
+                    apiKey: ephemeralKey
+                });
+                
+                updateStatus('Connected! Ready to listen for voice commands', 'connected');
+                updateButtons(true, false);
+                log('Successfully connected to voice agent!', 'success');
+                log('You can now start listening for voice commands.', 'info');
+                
+            } catch (error) {
+                log(`Connection failed: ${error.message}`, 'error');
+                updateStatus('Connection failed', 'disconnected');
+                updateButtons(false, false);
+                agent = null;
+                session = null;
+            }
+        };
+        
+        window.disconnectFromAgent = async function() {
+            try {
+                if (session) {
+                    await session.disconnect();
+                    session = null;
+                }
+                agent = null;
+                
+                updateStatus('Disconnected', 'disconnected');
+                updateButtons(false, false);
+                micIcon.className = 'mic-icon';
+                log('Disconnected from voice agent', 'info');
+                
+            } catch (error) {
+                log(`Disconnect error: ${error.message}`, 'error');
+            }
+        };
+        
+        window.startListening = function() {
+            if (!session) {
+                log('Not connected to agent', 'error');
+                return;
+            }
+            
+            try {
+                isListening = true;
+                updateStatus('Listening for voice commands...', 'listening');
+                updateButtons(true, true);
+                micIcon.className = 'mic-icon pulse';
+                log('Started listening for voice commands', 'info');
+                log('Speak your Minecraft commands now!', 'info');
+                
+            } catch (error) {
+                log(`Error starting listening: ${error.message}`, 'error');
+                isListening = false;
+                updateButtons(true, false);
+            }
+        };
+        
+        window.stopListening = function() {
+            try {
+                isListening = false;
+                updateStatus('Connected - Ready to listen', 'connected');
+                updateButtons(true, false);
+                micIcon.className = 'mic-icon';
+                log('Stopped listening', 'info');
+                
+            } catch (error) {
+                log(`Error stopping listening: ${error.message}`, 'error');
+            }
+        };
+        
+        // Initialize
+        log('Voice Minecraft Controller loaded', 'success');
+        log('Enter your ephemeral key and click Connect to start', 'info');
+    </script>
+</body>
+</html>

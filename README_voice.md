@@ -1,144 +1,278 @@
-# Voice Minecraft Controller
+# Voice-Controlled Minecraft Bot with OpenAI Agents SDK
 
-A simple voice-controlled system that listens for voice commands and sends them exactly as spoken to Claude Desktop.
+This project integrates voice control with your Minecraft bot using the OpenAI Agents SDK and MCP (Model Context Protocol). You can now control your Minecraft bot using natural voice commands!
 
-## Features
+## 🎯 Features
 
-- 🎤 **Voice Recognition** - Listens for voice commands using Google Speech Recognition
-- 🤖 **Claude Integration** - Automatically types commands exactly as spoken into Claude Desktop
-- ⚡ **Real-time Processing** - Continuous listening with timeout handling
-- 🛡️ **Error Handling** - Robust error handling for speech recognition issues
-- 🚫 **No API Keys** - No external API keys required, just voice recognition
+- **Voice Control**: Speak natural language commands to control your Minecraft bot
+- **Real-time Processing**: Uses OpenAI's Realtime API for instant voice processing
+- **MCP Integration**: Leverages all available MCP tools for comprehensive bot control
+- **Web Interface**: Beautiful, responsive web interface for voice control
+- **Secure Connection**: Uses ephemeral keys for secure browser-to-API communication
+- **Cross-platform**: Works on Windows, macOS, and Linux
 
-## Setup
+## 🚀 Quick Start
 
-### 1. Install Dependencies
+### Prerequisites
+
+1. **Node.js 16+** and **npm**
+2. **Python 3.8+**
+3. **OpenAI API Key** with Realtime API access
+4. **Minecraft Server** running and accessible
+
+### Installation
+
+1. **Clone and setup:**
+   ```bash
+   git clone <your-repo>
+   cd minecraft-ai-bot
+   ```
+
+2. **Create environment file:**
+   ```bash
+   echo "OPENAI_API_KEY=your-openai-api-key-here" > .env
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   # Install Node.js dependencies
+   npm install
+   
+   # Install Python dependencies
+   pip install -r requirements_voice.txt
+   ```
+
+4. **Start the voice controller:**
+   ```bash
+   # On macOS/Linux:
+   ./start_voice_controller.sh
+   
+   # On Windows:
+   start_voice_controller.bat
+   ```
+
+5. **Open your browser:**
+   Navigate to `http://localhost:3000`
+
+## 🎤 Voice Commands
+
+The voice agent understands natural language commands and converts them to MCP tool calls:
+
+### Movement Commands
+- "Move forward" → `move-in-direction` tool
+- "Jump" → `jump` tool
+- "Fly to 100 64 200" → `fly-to` tool
+- "Look at the player" → `look-at` tool
+
+### Inventory Commands
+- "Show my inventory" → `list-inventory` tool
+- "Find diamonds" → `find-item` tool
+- "Equip my sword" → `equip-item` tool
+
+### Building Commands
+- "Place a stone block" → `place-block` tool
+- "Dig this block" → `dig-block` tool
+- "What block is this?" → `get-block-info` tool
+
+### Communication Commands
+- "Say hello everyone" → `send-chat` tool
+- "Read the chat" → `read-chat` tool
+
+### Information Commands
+- "Where am I?" → `get-position` tool
+- "What gamemode am I in?" → `detect-gamemode` tool
+
+## 🏗️ Architecture
+
+The voice control system consists of several components:
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Web Browser   │    │   Voice Server   │    │   MCP Server    │
+│                 │    │   (Node.js)      │    │   (Node.js)     │
+│ - Voice Input   │◄──►│ - WebSocket      │◄──►│ - Minecraft     │
+│ - WebRTC        │    │ - Command Conv.  │    │ - Bot Control   │
+│ - UI            │    │ - Tool Execution │    │ - Tool Calls    │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       │                       │
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│ OpenAI Realtime │    │   Python Agent   │    │  Minecraft      │
+│      API        │    │   (Optional)     │    │   Server        │
+│ - Voice Proc.   │    │ - Key Generation │    │ - Game World    │
+│ - AI Processing │    │ - MCP Bridge     │    │ - Bot Actions   │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
+
+## 📁 File Structure
+
+```
+minecraft-ai-bot/
+├── voice_mcp_agent.py          # Python voice agent with MCP integration
+├── voice_server.js            # Node.js server for voice processing
+├── voice_interface.html       # Web interface for voice control
+├── package.json              # Node.js dependencies
+├── requirements_voice.txt    # Python dependencies
+├── start_voice_controller.sh # macOS/Linux startup script
+├── start_voice_controller.bat # Windows startup script
+├── VOICE_SETUP.md            # Detailed setup guide
+└── README_VOICE.md           # This file
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` file with:
 
 ```bash
-pip install -r requirements_voice.txt
+# Required: OpenAI API Key for voice processing
+OPENAI_API_KEY=sk-proj-your-openai-api-key-here
+
+# Optional: Herdora API Key for command conversion
+HERDORA_API_KEY=your-herdora-api-key-here
 ```
 
-### 2. System Requirements
+### MCP Server Configuration
 
-- **Microphone** - Working microphone for voice input
-- **Claude Desktop** - Must be open and ready to receive commands
-- **Internet Connection** - Required for Google Speech Recognition
+The MCP server can be configured with:
 
-### 3. Audio Setup
+- **Port**: Default 39613 (configurable)
+- **Username**: Bot username in Minecraft
+- **Host**: Server hostname (default: localhost)
 
-Make sure your microphone is working:
-```bash
-# Test microphone (optional)
-python -c "import speech_recognition as sr; print('Microphone test:', sr.Microphone().list_microphone_names())"
+### Voice Agent Configuration
+
+The voice agent supports:
+
+- **Model**: Uses `gpt-realtime` for voice processing
+- **Tools**: All available MCP tools are automatically integrated
+- **Instructions**: Customizable agent behavior and responses
+
+## 🛠️ Development
+
+### Adding New Voice Commands
+
+To add new voice commands, modify the `convertVoiceToMCPTools` function in `voice_server.js`:
+
+```javascript
+async convertVoiceToMCPTools(voiceCommand) {
+    const command = voiceCommand.toLowerCase();
+    
+    // Add your custom commands here
+    if (command.includes('your custom command')) {
+        return [{ tool: 'your-mcp-tool', args: { your: 'args' } }];
+    }
+    
+    // ... existing commands
+}
 ```
 
-## Usage
+### Extending MCP Tools
 
-### 1. Start the Voice Controller
+The system automatically integrates with all MCP tools. To add new tools:
 
-```bash
-python voice_minecraft_controller.py
-```
+1. Update the MCP server with new tools
+2. The voice agent will automatically recognize them
+3. Add voice command mappings in `voice_server.js`
 
-### 2. Voice Commands
+### Customizing the Web Interface
 
-Simply speak your commands exactly as you want them sent to Claude:
+The web interface (`voice_interface.html`) can be customized:
 
-**Examples:**
-- "build a house" → Sends "build a house"
-- "create a castle with towers" → Sends "create a castle with towers"
-- "make a bridge across the river" → Sends "make a bridge across the river"
-- "construct a modern skyscraper" → Sends "construct a modern skyscraper"
+- **Styling**: Modify the CSS in the `<style>` section
+- **Functionality**: Extend the JavaScript in the `<script>` section
+- **Layout**: Update the HTML structure
 
-### 3. Exit Commands
+## 🔒 Security
 
-Say any of these to stop:
-- "quit"
-- "exit"
-- "stop"
-- "goodbye"
+- **Ephemeral Keys**: Temporary keys that expire quickly
+- **Local Server**: Voice server runs locally for security
+- **HTTPS**: Use HTTPS in production environments
+- **API Key Protection**: Keep your OpenAI API key secure
 
-Or press **Ctrl+C**
-
-## How It Works
-
-1. **🎤 Listens** - Continuously listens for voice input
-2. **🔄 Processes** - Uses Google Speech Recognition to convert speech to text
-3. **📝 Transcribes** - Shows what was heard
-4. **⏳ Waits** - Gives 2 seconds to focus on Claude Desktop
-5. **📤 Types** - Automatically types the command exactly as spoken
-6. **✅ Sends** - Presses Enter to send to Claude
-
-## Example Session
-
-```
-🎮 Voice Minecraft Controller started!
-📋 Commands:
-  - Say any command exactly as you want it sent to Claude
-  - Say 'quit' or 'exit' to stop
-  - Press Ctrl+C to exit
-
-🎤 Make sure Claude Desktop is open and ready to receive commands!
-------------------------------------------------------------
-
-🎤 Listening for voice command...
-🔄 Processing speech...
-📝 Heard: 'build a house'
-📤 Sending to Claude: 'build a house'
-⏳ Switching to Claude Desktop in 2 seconds...
-✅ Command sent to Claude Desktop!
-✅ Successfully sent: 'build a house'
-
-🎤 Listening for voice command...
-```
-
-## Troubleshooting
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-1. **"Could not understand speech"**
-   - Speak more clearly and slowly
-   - Check microphone is working
-   - Reduce background noise
+1. **"Ephemeral key generation failed"**
+   - Check your OpenAI API key
+   - Ensure Realtime API access
+   - Verify internet connection
 
-2. **"Speech recognition error"**
+2. **"MCP server not found"**
+   - Install Node.js and npm
+   - Run `npm install`
+   - Check MCP server availability
+
+3. **"Microphone access denied"**
+   - Allow microphone access in browser
+   - Check browser permissions
+   - Try refreshing the page
+
+4. **"Connection failed"**
+   - Verify ephemeral key
    - Check internet connection
-   - Google Speech Recognition requires internet
+   - Ensure OpenAI API accessibility
 
-3. **"Error sending to Claude"**
-   - Make sure Claude Desktop is open
-   - Check that Claude Desktop is focused/active
-   - Ensure pyautogui has permission to control the system
+### Debug Mode
 
-### System Permissions
+Enable debug logging:
 
-On macOS, you may need to grant accessibility permissions to Python/terminal for pyautogui to work.
+```bash
+# Python agent
+DEBUG=1 python voice_mcp_agent.py
 
-## File Structure
-
-```
-voice_minecraft_controller.py  # Main voice controller
-requirements_voice.txt        # Python dependencies
-README_voice.md              # This documentation
+# Node.js server
+DEBUG=1 npm start
 ```
 
-## Dependencies
+## 📚 API Reference
 
-- **SpeechRecognition** - Speech-to-text conversion
-- **pyautogui** - GUI automation for typing
-- **pyaudio** - Audio input handling
+### Voice Server Endpoints
 
-## Tips for Best Results
+- `GET /` - Serve the voice interface
+- `GET /health` - Health check
+- `POST /start-mcp` - Start MCP server
+- `POST /stop-mcp` - Stop MCP server
+- `POST /execute-tool` - Execute MCP tool
 
-1. **Clear Speech** - Speak clearly and at normal pace
-2. **Quiet Environment** - Reduce background noise
-3. **Claude Ready** - Keep Claude Desktop open and ready
-4. **Natural Commands** - Speak naturally, the system will send exactly what you say
-5. **Pause Between** - Wait for processing before next command
+### WebSocket Messages
 
-## Key Changes
+- `voice_command` - Process voice command
+- `mcp_tool_call` - Execute MCP tool
+- `tools_generated` - Tools generated from voice
+- `tool_result` - Result from tool execution
 
-- ✅ **No API keys required** - Uses only Google Speech Recognition (free)
-- ✅ **Exact transcription** - Sends commands exactly as spoken
-- ✅ **No modifications** - No "in minecraft" suffix or other changes
-- ✅ **Simple setup** - Just install dependencies and run
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- OpenAI for the Agents SDK and Realtime API
+- The MCP community for the Minecraft server
+- Contributors and testers
+
+## 📞 Support
+
+For support and questions:
+
+1. Check the troubleshooting section
+2. Review the setup guide
+3. Check browser console logs
+4. Review server logs
+5. Open an issue on GitHub
+
+---
+
+**Happy voice-controlled Minecraft building! 🎮🎤**
